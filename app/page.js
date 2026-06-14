@@ -55,12 +55,16 @@ export default function Page() {
   const [predictId, setPredictId] = useState(null);
   const [selectedTests, setSelectedTests] = useState([]);
   const [diagnoseId, setDiagnoseId] = useState(null);
+  const [examVisited, setExamVisited] = useState(false);
+  const [showChief, setShowChief] = useState(false);
+  const [showExam, setShowExam] = useState(false);
 
   const recogRef = useRef(null);
   const logEndRef = useRef(null);
   const correctDx = CASE.diagnoses.find((d) => d.correct);
 
   useEffect(() => { logEndRef.current?.scrollIntoView({ behavior: "smooth" }); }, [history]);
+  useEffect(() => { if (stage === "exam") setExamVisited(true); }, [stage]);
 
   function speak(text) {
     if (muted || typeof window === "undefined" || !window.speechSynthesis) return;
@@ -147,6 +151,7 @@ export default function Page() {
     setBubble(CASE.patient.chiefComplaint); setAskedIds([]); setElicited([]);
     setEmpathyTouched(false); setInput(""); setPredictId(null);
     setSelectedTests([]); setDiagnoseId(null);
+    setExamVisited(false); setShowChief(false); setShowExam(false);
   }
 
   function goBack() {
@@ -182,6 +187,71 @@ export default function Page() {
   const fullySelectedGroups = commentGroups.filter((g) => g.members.every((id) => selectedTests.includes(id)));
   const groupedIds = new Set(fullySelectedGroups.flatMap((g) => g.members));
   const examImages = CASE.examImages || (CASE.examImage !== undefined ? [{ label: "検査画像", src: CASE.examImage }] : []);
+
+  // ---- 再利用パーツ：主訴パネル / 検査結果パネル / 表示切替バー ----
+  const chiefPanelJSX = (
+    <div className="review-panel">
+      <div className="chief-line">「{CASE.patient.chiefComplaint}」</div>
+      {CASE.patient.presentingHistory && CASE.patient.presentingHistory.length > 0 && (
+        <ul className="history-list" style={{ marginTop: 8 }}>
+          {CASE.patient.presentingHistory.map((h, i) => <li key={i}>{h}</li>)}
+        </ul>
+      )}
+    </div>
+  );
+
+  const examBodyJSX = (
+    <>
+      {examImages.length > 0 && (
+        <div style={{ display: "flex", flexDirection: "column", gap: 10, marginBottom: 12 }}>
+          {examImages.map((im, i) => (
+            <ImageSlot key={i} src={im.src} label={im.label}
+              hint="public/images に置いて case.js の examImages に指定" />
+          ))}
+        </div>
+      )}
+      {CASE.visionTable && CASE.visionTable.length > 0 && (
+        <div className="vision">
+          <div className="vision-title rounded">視力</div>
+          {CASE.visionTable.map((v, i) => (
+            <div className="vision-row" key={i}>
+              <span className="vision-eye">{v.eye}</span>
+              <span className="vision-val">{v.value}</span>
+              {v.note && <span className="vision-note">{v.note}</span>}
+            </div>
+          ))}
+        </div>
+      )}
+      <table className="exam">
+        <tbody>
+          {CASE.examResults.map((r, i) => (
+            <tr key={i}>
+              <td>{r.name}</td>
+              <td className={r.flag === "abnormal" ? "flag-abn" : "flag-norm"}>{r.value}</td>
+            </tr>
+          ))}
+        </tbody>
+      </table>
+    </>
+  );
+
+  // 主訴／検査結果を、どの画面からでも開閉できる表示切替セクション
+  const reviewSection = (
+    <div className="review">
+      <div className="reviewbar">
+        <button className="navbtn" onClick={() => setShowChief((v) => !v)}>
+          📋 主訴{showChief ? "を隠す" : "を見る"}
+        </button>
+        {examVisited && (
+          <button className="navbtn" onClick={() => setShowExam((v) => !v)}>
+            🔬 検査結果{showExam ? "を隠す" : "を見る"}
+          </button>
+        )}
+      </div>
+      {showChief && <div style={{ marginTop: 10 }}>{chiefPanelJSX}</div>}
+      {showExam && <div style={{ marginTop: 10 }}>{examBodyJSX}</div>}
+    </div>
+  );
 
   return (
     <main className="app">
@@ -239,6 +309,7 @@ export default function Page() {
       {/* ---------- INTERVIEW ---------- */}
       {stage === "interview" && (
         <>
+          {reviewSection}
           <div className="scene">
             {CASE.patient.image
               ? <ImageSlot src={CASE.patient.image} label="患者" />
@@ -309,44 +380,25 @@ export default function Page() {
       {stage === "exam" && (
         <div className="card">
           <h2 className="rounded">🔬 検査結果</h2>
-          {examImages.length > 0 && (
-            <div style={{ display: "flex", flexDirection: "column", gap: 10, marginBottom: 12 }}>
-              {examImages.map((im, i) => (
-                <ImageSlot key={i} src={im.src} label={im.label}
-                  hint="public/images に置いて case.js の examImages に指定" />
-              ))}
-            </div>
-          )}
-          {CASE.visionTable && CASE.visionTable.length > 0 && (
-            <div className="vision">
-              <div className="vision-title rounded">視力</div>
-              {CASE.visionTable.map((v, i) => (
-                <div className="vision-row" key={i}>
-                  <span className="vision-eye">{v.eye}</span>
-                  <span className="vision-val">{v.value}</span>
-                  {v.note && <span className="vision-note">{v.note}</span>}
-                </div>
-              ))}
-            </div>
-          )}
-          <table className="exam">
-            <tbody>
-              {CASE.examResults.map((r, i) => (
-                <tr key={i}>
-                  <td>{r.name}</td>
-                  <td className={r.flag === "abnormal" ? "flag-abn" : "flag-norm"}>{r.value}</td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
-          <p className="muted" style={{ marginTop: 12 }}>問診と検査所見から、どの疾患が疑わしいでしょうか。</p>
-          <button className="btn primary block" style={{ marginTop: 12 }} onClick={() => setStage("predict")}>疾患を予測する →</button>
+          <div className="reviewbar" style={{ marginBottom: 12 }}>
+            <button className="navbtn" onClick={() => setShowChief((v) => !v)}>
+              📋 主訴{showChief ? "を隠す" : "を見る"}
+            </button>
+          </div>
+          {showChief && <div style={{ marginBottom: 12 }}>{chiefPanelJSX}</div>}
+          {examBodyJSX}
+          <p className="muted" style={{ marginTop: 12 }}>問診と検査所見から、どの疾患が疑わしいでしょうか。もう少し聞きたいことがあれば、追加で問診もできます。</p>
+          <div className="btn-row">
+            <button className="btn ghost" onClick={() => setStage("interview")}>🗣 追加で問診する</button>
+            <button className="btn primary" style={{ flex: 1 }} onClick={() => setStage("predict")}>疾患を予測する →</button>
+          </div>
         </div>
       )}
 
       {/* ---------- PREDICT ---------- */}
       {stage === "predict" && (
         <div className="card">
+          {reviewSection}
           <h2 className="rounded">🤔 まず、いちばん疑わしいのは？</h2>
           <p className="hint" style={{ textAlign: "left", marginBottom: 12 }}>現時点の第一印象でOK。</p>
           <div className="options">
@@ -363,6 +415,7 @@ export default function Page() {
       {/* ---------- ADD TESTS ---------- */}
       {stage === "addtests" && (
         <div className="card">
+          {reviewSection}
           <h2 className="rounded">🧪 必要な追加検査を選ぶ</h2>
           <p className="hint" style={{ textAlign: "left", marginBottom: 12 }}>鑑別を確かめるために必要な検査を選択（複数可）。</p>
           <div className="options">
@@ -379,6 +432,7 @@ export default function Page() {
       {/* ---------- DIAGNOSE ---------- */}
       {stage === "diagnose" && (
         <div className="card">
+          {reviewSection}
           <h2 className="rounded">🎯 最終的に考える疾患は？</h2>
           <p className="hint" style={{ textAlign: "left", marginBottom: 12 }}>※鑑別を考える練習です（確定診断は医師が行います）</p>
           <div className="options">
@@ -395,6 +449,7 @@ export default function Page() {
       {/* ---------- RESULT ---------- */}
       {stage === "result" && (
         <>
+          {reviewSection}
           <div className="card">
             {(() => {
               const ok = diagnoseId === correctDx.id;
@@ -405,7 +460,7 @@ export default function Page() {
                 </div>
               );
             })()}
-            {CASE.explanation.image !== undefined && (
+            {CASE.explanation.image && (
               <div style={{ margin: "10px 0" }}>
                 <ImageSlot src={CASE.explanation.image} label="解説図"
                   hint="public/images に置いて case.js の explanation.image に指定" />

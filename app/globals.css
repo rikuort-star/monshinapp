@@ -357,3 +357,14 @@ button:disabled { opacity: .5; cursor: not-allowed; }
 .history-title { font-size: 13px; color: var(--teal-d); font-weight: 700; margin-bottom: 6px; }
 .history-list { margin: 0; padding-left: 18px; }
 .history-list li { font-size: 14px; line-height: 1.75; color: var(--ink); }
+
+/* ---- review toggles (主訴 / 検査結果 を表示・非表示) ---- */
+.review { margin-bottom: 12px; }
+.reviewbar { display: flex; gap: 8px; flex-wrap: wrap; }
+.review-panel {
+  background: #f5faff;
+  border: 1.5px solid #d9e9f9;
+  border-radius: 14px;
+  padding: 12px 14px;
+}
+.chief-line { font-size: 14.5px; line-height: 1.7; color: var(--ink); font-weight: 500; }
