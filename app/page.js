@@ -61,10 +61,17 @@ export default function Page() {
   const recogRef = useRef(null);
   const logEndRef = useRef(null);
   const logBoxRef = useRef(null);
+  const taRef = useRef(null);
+  const composingRef = useRef(false);
   const correctDx = CASE.diagnoses.find((d) => d.correct);
 
   useEffect(() => { const el = logBoxRef.current; if (el) el.scrollTop = el.scrollHeight; }, [history]);
   useEffect(() => { if (stage === "exam") setExamVisited(true); }, [stage]);
+
+  function clearInput() {
+    setInput("");
+    if (taRef.current) taRef.current.value = "";
+  }
 
   function speak(text) {
     if (muted || typeof window === "undefined" || !window.speechSynthesis) return;
@@ -91,7 +98,7 @@ export default function Page() {
 
     setHistory((h) => [...h, { role: "me", content: item.q }, { role: "pt", content: item.answer }]);
     setBubble(item.answer);
-    setInput("");
+    clearInput();
     setEmotion(emotionFor(nextElicited.length, nextEmpathy));
     speak(item.answer);
   }
@@ -100,7 +107,7 @@ export default function Page() {
     const text = input.trim();
     if (!text) return;
     const m = matchQuestion(text);
-    setInput("");
+    clearInput();
     if (!m) {
       setToast("うまく聞き取れませんでした。別の言い方で試してみてください。");
       setTimeout(() => setToast(""), 3500);
@@ -122,7 +129,7 @@ export default function Page() {
       setInput(t);
       if (e.results[e.results.length - 1].isFinal) {
         const m = matchQuestion(t);
-        setInput("");
+        clearInput();
         if (m) ask(m);
         else { setToast("うまく聞き取れませんでした。別の言い方で試してみてください。"); setTimeout(() => setToast(""), 3500); }
       }
@@ -387,10 +394,19 @@ export default function Page() {
             <div className="composer">
               <button className={`mic ${listening ? "on" : ""}`} onClick={toggleMic} aria-label="音声入力" title="音声で話す">🎤</button>
               <textarea
+                ref={taRef}
                 value={input}
                 placeholder={listening ? "聞き取り中…" : "質問を話す/入力する"}
                 onChange={(e) => setInput(e.target.value)}
-                onKeyDown={(e) => { if (e.key === "Enter" && !e.shiftKey) { e.preventDefault(); submitFreeText(); } }}
+                onCompositionStart={() => { composingRef.current = true; }}
+                onCompositionEnd={() => { composingRef.current = false; }}
+                onKeyDown={(e) => {
+                  if (e.key === "Enter" && !e.shiftKey) {
+                    if (e.nativeEvent.isComposing || composingRef.current || e.keyCode === 229) return;
+                    e.preventDefault();
+                    submitFreeText();
+                  }
+                }}
               />
               <button className="send" onClick={submitFreeText} aria-label="送信">➤</button>
             </div>
