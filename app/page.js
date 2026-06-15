@@ -100,7 +100,7 @@ export default function Page() {
     const m = matchQuestion(text);
     setInput("");
     if (!m) {
-      setToast("うまく聞き取れませんでした。別の言い方か、下の質問ボタンから選んでください。");
+      setToast("問診に関係のある質問でお願いします（問診以外の返答はできません）。");
       setTimeout(() => setToast(""), 3500);
       return;
     }
@@ -122,7 +122,7 @@ export default function Page() {
         const m = matchQuestion(t);
         setInput("");
         if (m) ask(m);
-        else { setToast("うまく聞き取れませんでした。下の質問ボタンから選んでください。"); setTimeout(() => setToast(""), 3500); }
+        else { setToast("問診に関係のある質問でお願いします（問診以外の返答はできません）。"); setTimeout(() => setToast(""), 3500); }
       }
     };
     r.onend = () => setListening(false);
@@ -407,7 +407,7 @@ export default function Page() {
             )}
             {CASE.hideQuestionButtons && (
               <p className="hint" style={{ marginTop: 10, textAlign: "left" }}>
-                🎤マイク、または入力欄から、自分で質問を考えて聞いてみましょう（質問の例は表示されません）。
+                マイク、または入力欄から、自分で質問を考えて聞いてみましょう（質問の例は表示されません）。問診に関係あること以外の返答はできません。
               </p>
             )}
 
@@ -463,12 +463,28 @@ export default function Page() {
           <p className="hint" style={{ textAlign: "left", marginBottom: 12 }}>鑑別を確かめるために必要な検査を選択（複数可）。</p>
           <div className="options">
             {CASE.additionalTests.map((t) => (
-              <button key={t.id} className={`opt ${selectedTests.includes(t.id) ? "sel" : ""}`} onClick={() => toggleTest(t.id)}>
-                <span className="tick">{selectedTests.includes(t.id) ? "✓" : ""}</span><span>{t.name}</span>
-              </button>
+              <div key={t.id}>
+                <button className={`opt ${selectedTests.includes(t.id) ? "sel" : ""}`} onClick={() => toggleTest(t.id)}>
+                  <span className="tick">{selectedTests.includes(t.id) ? "✓" : ""}</span><span>{t.name}</span>
+                </button>
+                {selectedTests.includes(t.id) && t.recommended && (t.images || t.resultNote) && (
+                  <div className="test-result">
+                    {t.resultNote && <p className="muted" style={{ margin: "0 2px 8px" }}>{t.resultNote}</p>}
+                    {t.images && t.images.map((im, i) => (
+                      <div key={i} style={{ margin: "8px 0" }}>
+                        <ImageSlot src={im.src} label={im.label}
+                          hint="public/images に置いて case.js の該当テストの images に指定" />
+                      </div>
+                    ))}
+                  </div>
+                )}
+              </div>
             ))}
           </div>
-          <button className="btn primary block" style={{ marginTop: 14 }} disabled={selectedTests.length === 0} onClick={() => setStage("result")}>結果を見る →</button>
+          <div className="btn-row" style={{ marginTop: 14 }}>
+            <button className="btn ghost" onClick={() => setStage("predict")}>← 予測（鑑別）へ</button>
+            <button className="btn primary" style={{ flex: 1 }} disabled={selectedTests.length === 0} onClick={() => setStage("result")}>結果を見る →</button>
+          </div>
         </div>
       )}
 
