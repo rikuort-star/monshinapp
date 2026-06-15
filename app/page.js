@@ -239,19 +239,19 @@ export default function Page() {
 
   const examBodyJSX = (
     <>
+      {CASE.refkera && (
+        <div className="refkera">
+          <div className="refkera-title">レフ・ケラト値</div>
+          {refkeraEye("右眼（R）", CASE.refkera.right)}
+          {refkeraEye("左眼（L）", CASE.refkera.left)}
+        </div>
+      )}
       {examImages.length > 0 && (
         <div style={{ display: "flex", flexDirection: "column", gap: 10, marginBottom: 12 }}>
           {examImages.map((im, i) => (
             <ImageSlot key={i} src={im.src} label={im.label}
               hint="public/images に置いて case.js の examImages に指定" />
           ))}
-        </div>
-      )}
-      {CASE.refkera && (
-        <div className="refkera">
-          <div className="refkera-title">レフ・ケラト値</div>
-          {refkeraEye("右眼（R）", CASE.refkera.right)}
-          {refkeraEye("左眼（L）", CASE.refkera.left)}
         </div>
       )}
       {CASE.visionTable && CASE.visionTable.length > 0 && (
