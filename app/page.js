@@ -8,9 +8,8 @@ import { CASE } from "../lib/case.js";
 const STAGES = [
   { key: "interview", label: "問診" },
   { key: "exam", label: "検査" },
-  { key: "predict", label: "予測" },
+  { key: "predict", label: "予測（鑑別）" },
   { key: "addtests", label: "追加検査" },
-  { key: "diagnose", label: "鑑別" },
   { key: "result", label: "結果" },
 ];
 
@@ -443,8 +442,8 @@ export default function Page() {
       {stage === "predict" && (
         <div className="card">
           {reviewSection}
-          <h2 className="rounded">🤔 まず、いちばん疑わしいのは？</h2>
-          <p className="hint" style={{ textAlign: "left", marginBottom: 12 }}>現時点の第一印象でOK。</p>
+          <h2 className="rounded">🤔 考えられる疾患（鑑別）は？</h2>
+          <p className="hint" style={{ textAlign: "left", marginBottom: 12 }}>※鑑別を考える臨床推論の練習です（確定診断は医師が行います）</p>
           <div className="options">
             {CASE.diagnoses.map((d) => (
               <button key={d.id} className={`opt ${predictId === d.id ? "sel" : ""}`} onClick={() => setPredictId(d.id)}>
@@ -469,24 +468,7 @@ export default function Page() {
               </button>
             ))}
           </div>
-          <button className="btn primary block" style={{ marginTop: 14 }} disabled={selectedTests.length === 0} onClick={() => setStage("diagnose")}>鑑別を決める →</button>
-        </div>
-      )}
-
-      {/* ---------- DIAGNOSE ---------- */}
-      {stage === "diagnose" && (
-        <div className="card">
-          {reviewSection}
-          <h2 className="rounded">🎯 最終的に考える疾患は？</h2>
-          <p className="hint" style={{ textAlign: "left", marginBottom: 12 }}>※鑑別を考える練習です（確定診断は医師が行います）</p>
-          <div className="options">
-            {CASE.diagnoses.map((d) => (
-              <button key={d.id} className={`opt ${diagnoseId === d.id ? "sel" : ""}`} onClick={() => setDiagnoseId(d.id)}>
-                <span className="tick">{diagnoseId === d.id ? "✓" : ""}</span>{d.name}
-              </button>
-            ))}
-          </div>
-          <button className="btn coral block" style={{ marginTop: 14 }} disabled={!diagnoseId} onClick={() => setStage("result")}>結果を見る →</button>
+          <button className="btn primary block" style={{ marginTop: 14 }} disabled={selectedTests.length === 0} onClick={() => setStage("result")}>結果を見る →</button>
         </div>
       )}
 
@@ -496,11 +478,11 @@ export default function Page() {
           {reviewSection}
           <div className="card">
             {(() => {
-              const ok = diagnoseId === correctDx.id;
+              const ok = predictId === correctDx.id;
               return (
                 <div className={`verdict ${ok ? "ok" : "ng"}`}>
                   <div className="big rounded">{ok ? "正解！🎉" : "おしい！"}</div>
-                  <p className="muted" style={{ marginTop: 4 }}>あなたの選択：{CASE.diagnoses.find((d) => d.id === diagnoseId)?.name}</p>
+                  <p className="muted" style={{ marginTop: 4 }}>あなたの選択：{CASE.diagnoses.find((d) => d.id === predictId)?.name}</p>
                 </div>
               );
             })()}
