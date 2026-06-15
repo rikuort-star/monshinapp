@@ -83,7 +83,7 @@ export default function Page() {
     } catch {}
   }
 
-  function ask(item) {
+  function ask(item, userText) {
     if (!item) return;
     const nextAsked = askedIds.includes(item.id) ? askedIds : [...askedIds, item.id];
     setAskedIds(nextAsked);
@@ -96,7 +96,8 @@ export default function Page() {
     let nextEmpathy = empathyTouched;
     if (item.empathy) { nextEmpathy = true; setEmpathyTouched(true); }
 
-    setHistory((h) => [...h, { role: "me", content: item.q }, { role: "pt", content: item.answer }]);
+    const shown = (userText && userText.trim()) ? userText.trim() : item.q;
+    setHistory((h) => [...h, { role: "me", content: shown }, { role: "pt", content: item.answer }]);
     setBubble(item.answer);
     clearInput();
     setEmotion(emotionFor(nextElicited.length, nextEmpathy));
@@ -113,7 +114,7 @@ export default function Page() {
       setTimeout(() => setToast(""), 3500);
       return;
     }
-    ask(m);
+    ask(m, text);
   }
 
   function ensureRecog() {
@@ -130,7 +131,7 @@ export default function Page() {
       if (e.results[e.results.length - 1].isFinal) {
         const m = matchQuestion(t);
         clearInput();
-        if (m) ask(m);
+        if (m) ask(m, t);
         else { setToast("うまく聞き取れませんでした。別の言い方で試してみてください。"); setTimeout(() => setToast(""), 3500); }
       }
     };
