@@ -60,9 +60,10 @@ export default function Page() {
 
   const recogRef = useRef(null);
   const logEndRef = useRef(null);
+  const logBoxRef = useRef(null);
   const correctDx = CASE.diagnoses.find((d) => d.correct);
 
-  useEffect(() => { logEndRef.current?.scrollIntoView({ behavior: "smooth" }); }, [history]);
+  useEffect(() => { const el = logBoxRef.current; if (el) el.scrollTop = el.scrollHeight; }, [history]);
   useEffect(() => { if (stage === "exam") setExamVisited(true); }, [stage]);
 
   function speak(text) {
@@ -90,6 +91,7 @@ export default function Page() {
 
     setHistory((h) => [...h, { role: "me", content: item.q }, { role: "pt", content: item.answer }]);
     setBubble(item.answer);
+    setInput("");
     setEmotion(emotionFor(nextElicited.length, nextEmpathy));
     speak(item.answer);
   }
@@ -100,7 +102,7 @@ export default function Page() {
     const m = matchQuestion(text);
     setInput("");
     if (!m) {
-      setToast("問診に関係のある質問でお願いします（問診以外の返答はできません）。");
+      setToast("うまく聞き取れませんでした。別の言い方で試してみてください。");
       setTimeout(() => setToast(""), 3500);
       return;
     }
@@ -122,7 +124,7 @@ export default function Page() {
         const m = matchQuestion(t);
         setInput("");
         if (m) ask(m);
-        else { setToast("問診に関係のある質問でお願いします（問診以外の返答はできません）。"); setTimeout(() => setToast(""), 3500); }
+        else { setToast("うまく聞き取れませんでした。別の言い方で試してみてください。"); setTimeout(() => setToast(""), 3500); }
       }
     };
     r.onend = () => setListening(false);
@@ -372,7 +374,7 @@ export default function Page() {
 
           <div className="card">
             {history.length > 0 && (
-              <div className="log">
+              <div className="log" ref={logBoxRef}>
                 {history.map((m, i) => (
                   <div key={i} className={`row ${m.role === "me" ? "me" : ""}`}>
                     <div className={`msg ${m.role === "me" ? "me" : "pt"}`}>{m.content}</div>
@@ -407,7 +409,7 @@ export default function Page() {
             )}
             {CASE.hideQuestionButtons && (
               <p className="hint" style={{ marginTop: 10, textAlign: "left" }}>
-                マイク、または入力欄から、自分で質問を考えて聞いてみましょう（質問の例は表示されません）。問診に関係あること以外の返答はできません。
+                マイク、または入力欄から、自分で質問を考えて聞いてみましょう（質問の例は表示されません）。あいさつなど簡単な日常会話もできます。
               </p>
             )}
 
