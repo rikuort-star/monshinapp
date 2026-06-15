@@ -200,6 +200,43 @@ export default function Page() {
     </div>
   );
 
+  // レフ・ケラト値の表（片眼分）を描画
+  function refkeraEye(label, d) {
+    if (!d) return null;
+    return (
+      <div style={{ marginBottom: 10 }}>
+        <div className="rk-eye">{label}</div>
+        <table className="rk-table">
+          <thead>
+            <tr><th></th><th>SPH</th><th>CYL</th><th>Axis</th><th>信頼</th></tr>
+          </thead>
+          <tbody>
+            {d.ref.map((r, i) => (
+              <tr key={i}><td>{r.n}</td><td>{r.sph}</td><td>{r.cyl}</td><td>{r.ax}</td><td>{r.c}</td></tr>
+            ))}
+            {d.refRep && (
+              <tr className="rep"><td>代表</td><td>{d.refRep.sph}</td><td>{d.refRep.cyl}</td><td>{d.refRep.ax}</td><td></td></tr>
+            )}
+          </tbody>
+        </table>
+        {d.kerato && d.kerato.length > 0 && (
+          <>
+            <div className="rk-sub">ケラト値（代表値）</div>
+            <table className="rk-table">
+              <thead><tr><th></th><th>mm</th><th>D</th><th>deg</th></tr></thead>
+              <tbody>
+                {d.kerato.map((k, i) => (
+                  <tr key={i}><td>{k.name}</td><td>{k.mm}</td><td>{k.d}</td><td>{k.deg}</td></tr>
+                ))}
+              </tbody>
+            </table>
+          </>
+        )}
+        {d.keratoError && <div className="rk-error">{d.keratoError}</div>}
+      </div>
+    );
+  }
+
   const examBodyJSX = (
     <>
       {examImages.length > 0 && (
@@ -208,6 +245,13 @@ export default function Page() {
             <ImageSlot key={i} src={im.src} label={im.label}
               hint="public/images に置いて case.js の examImages に指定" />
           ))}
+        </div>
+      )}
+      {CASE.refkera && (
+        <div className="refkera">
+          <div className="refkera-title">レフ・ケラト値</div>
+          {refkeraEye("右眼（R）", CASE.refkera.right)}
+          {refkeraEye("左眼（L）", CASE.refkera.left)}
         </div>
       )}
       {CASE.visionTable && CASE.visionTable.length > 0 && (
