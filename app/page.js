@@ -467,10 +467,9 @@ export default function Page() {
                 <button className={`opt ${selectedTests.includes(t.id) ? "sel" : ""}`} onClick={() => toggleTest(t.id)}>
                   <span className="tick">{selectedTests.includes(t.id) ? "✓" : ""}</span><span>{t.name}</span>
                 </button>
-                {selectedTests.includes(t.id) && t.recommended && (t.images || t.resultNote) && (
+                {selectedTests.includes(t.id) && t.recommended && t.images && (
                   <div className="test-result">
-                    {t.resultNote && <p className="muted" style={{ margin: "0 2px 8px" }}>{t.resultNote}</p>}
-                    {t.images && t.images.map((im, i) => (
+                    {t.images.map((im, i) => (
                       <div key={i} style={{ margin: "8px 0" }}>
                         <ImageSlot src={im.src} label={im.label}
                           hint="public/images に置いて case.js の該当テストの images に指定" />
@@ -481,10 +480,8 @@ export default function Page() {
               </div>
             ))}
           </div>
-          <div className="btn-row" style={{ marginTop: 14 }}>
-            <button className="btn ghost" onClick={() => setStage("predict")}>← 予測（鑑別）へ</button>
-            <button className="btn primary" style={{ flex: 1 }} disabled={selectedTests.length === 0} onClick={() => setStage("result")}>結果を見る →</button>
-          </div>
+          <button className="btn primary block" style={{ marginTop: 14 }} disabled={selectedTests.length === 0} onClick={() => setStage("result")}>結果を見る →</button>
+          <button className="btn ghost block" style={{ marginTop: 10 }} onClick={() => setStage("predict")}>← 追加検査の検査結果を踏まえて予測（鑑別）へ戻る</button>
         </div>
       )}
 
